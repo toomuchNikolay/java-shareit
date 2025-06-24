@@ -9,42 +9,32 @@ import ru.practicum.shareit.user.dto.UserUpdateDto;
 import ru.practicum.shareit.user.exception.DuplicatedEmailException;
 import ru.practicum.shareit.user.exception.UserNotFoundException;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private final Set<String> usedEmail = new HashSet<>();
+    private static final String USER_NOT_FOUND = "Пользователь не найден";
     private final UserRepository repository;
 
     @Override
     public UserDto addUser(UserCreateDto dto) {
-        if (usedEmail.contains(dto.getEmail().toLowerCase().trim())) {
-            log.warn("Попытка повторно зарегистрировать на почтовый адрес - {}", dto.getEmail().toLowerCase().trim());
-            throw new DuplicatedEmailException("Указанный почтовый адрес уже зарегистрирован");
-        }
+        checkEmail(dto.getEmail());
         User added = UserMapper.toEntity(dto);
         added = repository.save(added);
         log.info("Добавлена сущность User: {}", added);
-        usedEmail.add(added.getEmail().toLowerCase().trim());
         return UserMapper.toDto(added);
     }
 
     @Override
     public UserDto updateUser(Long userId, UserUpdateDto dto) {
         User findUser = repository.findUserById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
-        if (dto.hasEmail() && usedEmail.contains(dto.getEmail().toLowerCase().trim())) {
-            log.warn("Попытка повторно зарегистрировать на почтовый адрес - {}", dto.getEmail().toLowerCase().trim());
-            throw new DuplicatedEmailException("Указанный почтовый адрес уже зарегистрирован");
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+        if (dto.hasEmail() && !findUser.getEmail().equalsIgnoreCase(dto.getEmail())) {
+            checkEmail(dto.getEmail());
         }
         User updated = UserMapper.updateFieldsUser(findUser, dto);
         updated = repository.update(updated);
         log.info("Обновлена сущность User: {}", updated);
-        usedEmail.remove(findUser.getEmail().toLowerCase().trim());
-        usedEmail.add(updated.getEmail().toLowerCase().trim());
         return UserMapper.toDto(updated);
     }
 
@@ -52,12 +42,21 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserById(Long userId) {
         return repository.findUserById(userId)
                 .map(UserMapper::toDto)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
     }
 
     @Override
     public void deleteUser(Long userId) {
+        User deleted = repository.findUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
         repository.delete(userId);
-        log.info("Удалена сущность User c id = {}", userId);
+        log.info("Удалена сущность User: {}", deleted);
+    }
+
+    private void checkEmail(String email) {
+        if (repository.isUsedEmail(email)) {
+            log.warn("Попытка повторно зарегистрировать на почтовый адрес - {}", email.toLowerCase().trim());
+            throw new DuplicatedEmailException("Указанный почтовый адрес уже зарегистрирован");
+        }
     }
 }

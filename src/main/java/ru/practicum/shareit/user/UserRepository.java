@@ -10,4 +10,6 @@ public interface UserRepository {
     Optional<User> findUserById(Long userId);
 
     void delete(Long id);
+
+    boolean isUsedEmail(String email);
 }
