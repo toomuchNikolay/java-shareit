@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-public class ItemDto {
+public class ItemShortDto {
     private Long id;
     private String name;
-    private String description;
-    private Boolean available;
-    private Long ownerId;
 }
