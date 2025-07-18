@@ -103,6 +103,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDto addComment(Long itemId, Long authorId, CommentCreateDto dto) {
         Item item = findByIdOrThrow(itemId);
         User author = userService.findByIdOrThrow(authorId);
