@@ -17,10 +17,10 @@ import ru.practicum.shareit.user.entity.User;
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false)
+    @EqualsAndHashCode.Include
     private String name;
 
     private String description;
@@ -30,6 +30,7 @@ public class Item {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
+    @EqualsAndHashCode.Include
     @ToString.Exclude
     private User owner;
 
